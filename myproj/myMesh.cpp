@@ -71,15 +71,68 @@ bool myMesh::readFile(std::string filename)
 			float x, y, z;
 			myline >> x >> y >> z;
 			cout << "v " << x << " " << y << " " << z << endl;
+
+			myPoint3D* p = new myPoint3D(x, y, z);
+			myVertex* v = new myVertex();
+			v->point = p;
+			vertices.push_back(v);
 		}
 		else if (t == "mtllib") {}
 		else if (t == "usemtl") {}
 		else if (t == "s") {}
 		else if (t == "f")
 		{
-			cout << "f"; 
-			while (myline >> u) cout << " " << atoi((u.substr(0, u.find("/"))).c_str());
+			cout << "f";
+			faceids.clear();
+			while (myline >> u) { // read indices of vertices from a face into a container - it helps to access them later
+				int ind = atoi((u.substr(0, u.find("/"))).c_str());
+				cout << " " << ind;
+				faceids.push_back(ind - 1);
+			}
 			cout << endl;
+
+			if (faceids.size() < 3) // ignore degenerate faces
+				continue;
+
+			hedges = new myHalfedge * [faceids.size()]; // allocate the array for storing pointers to half-edges
+			for (unsigned int i = 0; i < faceids.size(); i++)
+				hedges[i] = new myHalfedge(); // pre-allocate new half-edges
+
+			myFace* f = new myFace(); // allocate the new face
+			f->adjacent_halfedge = hedges[0]; // connect the face with incident edge
+
+			for (unsigned int i = 0; i < faceids.size(); i++)
+			{
+				int iplusone = (i + 1) % faceids.size();
+				int iminusone = (i - 1 + faceids.size()) % faceids.size();
+
+				// YOUR CODE COMES HERE!
+
+				// connect prevs, and next
+				hedges[i]->next = hedges[iplusone];
+				hedges[i]->prev = hedges[iminusone];
+				hedges[i]->adjacent_face = f;
+
+				// search for the twins using twin_map
+				twin_map.insert({ { faceids[i], faceids[iplusone] }, hedges[i] });
+				it = twin_map.find({ faceids[iplusone], faceids[i] });
+				if (it != twin_map.end()) {
+					hedges[i]->twin = it->second;
+					it->second->twin = hedges[i];
+				}
+
+				// set originof
+				myVertex *v = vertices[faceids[i]];
+				hedges[i]->source = v;
+				if (v->originof == NULL) {
+					v->originof = hedges[i];
+				}
+				// push edges to halfedges in myMesh
+				halfedges.push_back(hedges[i]);
+			}
+			delete[] hedges;
+			// push faces to faces in myMesh
+			faces.push_back(f);
 		}
 	}
 
