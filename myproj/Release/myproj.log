@@ -2,11 +2,11 @@
 nfd.lib(nfd_win.obj) : warning LNK4075: ' /EDITANDCONTINUE' ignoré à cause de la spécification '/OPT:ICF'
 LINK : warning LNK4098: conflit entre la bibliothèque par défaut 'MSVCRTD' et les autres bibliothèques ; utilisez /NODEFAULTLIB:library
   Génération de code en cours
-  17 of 822 functions ( 2.1%) were compiled, the rest were copied from previous compilation.
+  2 of 823 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    49 functions had inline decision re-evaluated but remain unchanged
+    2 functions had inline decision re-evaluated but remain unchanged
   Fin de la génération du code
 LINK : warning LNK4286: le symbole '_sprintf_s' défini dans 'MSVCRT.lib(error.obj)' est importé par 'nfd.lib(nfd_win.obj)'
 nfd.lib(nfd_common.obj) : warning LNK4099: PDB 'vc110.pdb' n'a pu être trouvé avec 'nfd.lib(nfd_common.obj)' ou sur 'C:\Users\ludovic\Documents\Projets\meshviewer-init\Release\vc110.pdb' ; l'objet sera lié sans informations de débogage
-nfd.lib(nfd_win.obj) : warning LNK4099: PDB '' n'a pu être trouvé avec 'nfd.lib(nfd_win.obj)' ou sur '' ; l'objet sera lié sans informations de débogage
+nfd.lib(nfd_win.obj) : warning LNK4099: PDB 'vc110.pdb' n'a pu être trouvé avec 'nfd.lib(nfd_win.obj)' ou sur 'C:\Users\ludovic\Documents\Projets\meshviewer-init\Release\vc110.pdb' ; l'objet sera lié sans informations de débogage
   myproj.vcxproj -> C:\Users\ludovic\Documents\Projets\meshviewer-init\Release\myproj.exe
