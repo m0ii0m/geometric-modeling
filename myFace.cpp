@@ -17,5 +17,5 @@ myFace::~myFace(void)
 
 void myFace::computeNormal()
 {
-	/**** TODO ****/
+	normal->setNormal(adjacent_halfedge->source->point, adjacent_halfedge->next->source->point, adjacent_halfedge->next->next->source->point);
 }
