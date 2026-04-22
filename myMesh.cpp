@@ -223,13 +223,52 @@ void myMesh::simplify(myVertex *)
 
 void myMesh::triangulate()
 {
-	/**** TODO ****/
+	int initial_face_count = faces.size();
+	for (int i = 0; i < initial_face_count; i++) {
+		myFace* f = faces[i];
+		while (triangulate(f)) {
+			myHalfedge* o = f->adjacent_halfedge;
+			myHalfedge* he1 = new myHalfedge();
+			myHalfedge* he2 = new myHalfedge();
+			myFace* new_f = new myFace();
+
+			o->adjacent_face = new_f;
+			o->next->adjacent_face = new_f;
+
+			he1->adjacent_face = new_f;
+			he1->next = o;
+			he1->prev = o->next;
+			he1->twin = he2;
+			he1->source = o->next->next->source;
+
+			he2->adjacent_face = f;
+			he2->next = o->next->next;
+			he2->prev = o->prev;
+			he2->twin = he1;
+			he2->source = o->source;
+
+			he1->next->prev = he1;
+			he1->prev->next = he1;
+			he2->next->prev = he2;
+			he2->prev->next = he2;
+
+			new_f->adjacent_halfedge = he1;
+			f->adjacent_halfedge = he2;
+
+			faces.push_back(new_f);
+			halfedges.push_back(he1);
+			halfedges.push_back(he2);
+		}
+	}
 }
 
 //return false if already triangle, true othewise.
 bool myMesh::triangulate(myFace *f)
 {
-	/**** TODO ****/
+	myHalfedge* o = f->adjacent_halfedge;
+	if (o != o->next->next->next) {
+		return true;
+	}
 	return false;
 }
 
