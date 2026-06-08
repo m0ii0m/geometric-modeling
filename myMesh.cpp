@@ -415,3 +415,77 @@ bool myMesh::triangulate(myFace *f)
 	f->adjacent_halfedge = start;
 	return true;
 }
+
+void myMesh::generateSurfaceOfRevolution(vector<myPoint3D> &profile, int slices)
+{
+	clear();
+
+	int n = profile.size();
+	if (n < 2 || slices < 3) return;
+
+	double PI2 = 2.0 * 3.14159265358979323846;
+
+	for (int j = 0; j < slices; j++) {
+		double angle = PI2 * j / slices;
+		double cosA = cos(angle);
+		double sinA = sin(angle);
+		for (int i = 0; i < n; i++) {
+			myVertex* v = new myVertex();
+			v->point = new myPoint3D(
+				profile[i].X * cosA,
+				profile[i].Z,
+				profile[i].X * sinA
+			);
+			vertices.push_back(v);
+		}
+	}
+
+	map<pair<int, int>, myHalfedge*> twin_map;
+	map<pair<int, int>, myHalfedge*>::iterator it;
+
+	for (int j = 0; j < slices; j++) {
+		int j_next = (j + 1) % slices;
+		for (int i = 0; i < n - 1; i++) {
+			int v0 = j * n + i;
+			int v1 = j * n + (i + 1);
+			int v2 = j_next * n + (i + 1);
+			int v3 = j_next * n + i;
+
+			int faceids[4] = { v0, v1, v2, v3 };
+
+			myHalfedge* hedges[4];
+			for (int k = 0; k < 4; k++)
+				hedges[k] = new myHalfedge();
+
+			myFace* f = new myFace();
+			f->adjacent_halfedge = hedges[0];
+
+			for (int k = 0; k < 4; k++) {
+				int kn = (k + 1) % 4;
+				int kp = (k - 1 + 4) % 4;
+
+				hedges[k]->next = hedges[kn];
+				hedges[k]->prev = hedges[kp];
+				hedges[k]->adjacent_face = f;
+				hedges[k]->source = vertices[faceids[k]];
+
+				if (vertices[faceids[k]]->originof == NULL)
+					vertices[faceids[k]]->originof = hedges[k];
+
+				twin_map.insert({ { faceids[k], faceids[kn] }, hedges[k] });
+				it = twin_map.find({ faceids[kn], faceids[k] });
+				if (it != twin_map.end()) {
+					hedges[k]->twin = it->second;
+					it->second->twin = hedges[k];
+				}
+
+				halfedges.push_back(hedges[k]);
+			}
+
+			faces.push_back(f);
+		}
+	}
+
+	normalize();
+	checkMesh();
+}

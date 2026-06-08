@@ -27,9 +27,11 @@ void myVertex::computeNormal()
 		myVector3D* fn = step->adjacent_face->normal;
 		*normal += *fn;
 		counter++;
+		if (step->twin == NULL) break;
 		step = step->twin->next;
 	} while (step != originof);
 
-	*normal = *normal / counter;
+	if (counter > 0)
+		*normal = *normal / counter;
 }
 

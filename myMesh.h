@@ -32,6 +32,8 @@ public:
 
 	void clear();
 
+	void generateSurfaceOfRevolution(std::vector<myPoint3D> &profile, int slices);
+
 	myMesh(void);
 	~myMesh(void);
 };

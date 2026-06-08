@@ -159,6 +159,23 @@ void menu(int item)
 			m->simplify();
 			break;
 	 	}
+	case MENU_GENERATE:
+		{
+			vector<myPoint3D> profile;
+			profile.push_back(myPoint3D(0.4, 0, -1.0));
+			profile.push_back(myPoint3D(0.5, 0, -0.8));
+			profile.push_back(myPoint3D(0.55, 0, -0.5));
+			profile.push_back(myPoint3D(0.4, 0, -0.2));
+			profile.push_back(myPoint3D(0.3, 0,  0.0));
+			profile.push_back(myPoint3D(0.25, 0, 0.2));
+			profile.push_back(myPoint3D(0.3, 0,  0.5));
+			profile.push_back(myPoint3D(0.35, 0, 0.8));
+			profile.push_back(myPoint3D(0.3, 0,  1.0));
+			m->generateSurfaceOfRevolution(profile, 24);
+			m->computeNormals();
+			makeBuffers(m);
+			break;
+		}
 	}
 	glutPostRedisplay();
 }
