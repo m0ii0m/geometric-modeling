@@ -33,15 +33,99 @@ void myMesh::clear()
 
 void myMesh::checkMesh()
 {
-	vector<myHalfedge *>::iterator it;
-	for (it = halfedges.begin(); it != halfedges.end(); it++)
-	{
-		if ((*it)->twin == NULL)
-			break;
+	int errors = 0;
+
+	for (unsigned int i = 0; i < halfedges.size(); i++) {
+		myHalfedge* he = halfedges[i];
+		if (he->twin == NULL) {
+			cout << "Error: halfedge " << i << " has no twin\n";
+			errors++;
+		}
+		else if (he->twin->twin != he) {
+			cout << "Error: halfedge " << i << " twin->twin != he\n";
+			errors++;
+		}
 	}
-	if (it != halfedges.end())
-		cout << "Error! Not all edges have their twins!\n";
-	else cout << "Each edge has a twin!\n";
+
+	for (unsigned int i = 0; i < halfedges.size(); i++) {
+		myHalfedge* he = halfedges[i];
+		if (he->next == NULL || he->prev == NULL) {
+			cout << "Error: halfedge " << i << " has null next or prev\n";
+			errors++;
+			continue;
+		}
+		if (he->next->prev != he) {
+			cout << "Error: halfedge " << i << " next->prev != he\n";
+			errors++;
+		}
+		if (he->prev->next != he) {
+			cout << "Error: halfedge " << i << " prev->next != he\n";
+			errors++;
+		}
+	}
+
+	for (unsigned int i = 0; i < halfedges.size(); i++) {
+		myHalfedge* he = halfedges[i];
+		myHalfedge* step = he->next;
+		int count = 1;
+		while (step != he && count < 1000) {
+			step = step->next;
+			count++;
+		}
+		if (step != he) {
+			cout << "Error: halfedge " << i << " face loop does not close\n";
+			errors++;
+		}
+	}
+
+	for (unsigned int i = 0; i < halfedges.size(); i++) {
+		myHalfedge* he = halfedges[i];
+		if (he->twin == NULL || he->next == NULL) continue;
+		if (he->twin->source != he->next->source) {
+			cout << "Error: halfedge " << i << " twin->source != next->source\n";
+			errors++;
+		}
+	}
+
+	for (unsigned int i = 0; i < faces.size(); i++) {
+		myFace* f = faces[i];
+		if (f->adjacent_halfedge == NULL) {
+			cout << "Error: face " << i << " has null adjacent_halfedge\n";
+			errors++;
+			continue;
+		}
+		if (f->adjacent_halfedge->adjacent_face != f) {
+			cout << "Error: face " << i << " adjacent_halfedge does not point back to face\n";
+			errors++;
+		}
+
+		myHalfedge* he = f->adjacent_halfedge;
+		do {
+			if (he->adjacent_face != f) {
+				cout << "Error: face " << i << " has a halfedge pointing to wrong face\n";
+				errors++;
+				break;
+			}
+			he = he->next;
+		} while (he != f->adjacent_halfedge);
+	}
+
+	for (unsigned int i = 0; i < vertices.size(); i++) {
+		myVertex* v = vertices[i];
+		if (v->originof == NULL) {
+			cout << "Warning: vertex " << i << " has null originof (isolated vertex)\n";
+			continue;
+		}
+		if (v->originof->source != v) {
+			cout << "Error: vertex " << i << " originof->source != vertex\n";
+			errors++;
+		}
+	}
+
+	if (errors == 0)
+		cout << "Mesh check passed! All tests OK\n";
+	else
+		cout << "Mesh check found " << errors << " error(s)\n";
 }
 
 
