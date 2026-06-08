@@ -18,6 +18,7 @@ myVertex::~myVertex(void)
 
 void myVertex::computeNormal()
 {
+	if (originof == NULL) return;
 	myHalfedge* step = originof;
 	normal->dX = normal->dY = normal->dZ = 0;
 	int counter = 0;

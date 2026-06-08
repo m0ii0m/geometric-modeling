@@ -265,10 +265,69 @@ void myMesh::triangulate()
 //return false if already triangle, true othewise.
 bool myMesh::triangulate(myFace *f)
 {
-	myHalfedge* o = f->adjacent_halfedge;
-	if (o != o->next->next->next) {
-		return true;
-	}
-	return false;
-}
+	myHalfedge* start = f->adjacent_halfedge;
 
+	if (start == start->next->next->next)
+		return false;
+
+	myVector3D face_normal(0, 0, 0);
+	myHalfedge* he = start;
+	do {
+		myPoint3D* cur = he->source->point;
+		myPoint3D* nxt = he->next->source->point;
+		face_normal.dX += (cur->Y - nxt->Y) * (cur->Z + nxt->Z);
+		face_normal.dY += (cur->Z - nxt->Z) * (cur->X + nxt->X);
+		face_normal.dZ += (cur->X - nxt->X) * (cur->Y + nxt->Y);
+		he = he->next;
+	} while (he != start);
+
+	he = start;
+	do {
+		myPoint3D* a = he->source->point;
+		myPoint3D* b = he->next->source->point;
+		myPoint3D* c = he->next->next->source->point;
+
+		myVector3D ab(b->X - a->X, b->Y - a->Y, b->Z - a->Z);
+		myVector3D bc(c->X - b->X, c->Y - b->Y, c->Z - b->Z);
+		myVector3D cross;
+		cross.crossproduct(ab, bc);
+		double dot = cross.dX * face_normal.dX + cross.dY * face_normal.dY + cross.dZ * face_normal.dZ;
+
+		if (dot > 0) {
+			
+			bool ear = true;
+			myHalfedge* test = he->next->next->next;
+			while (test != he) {
+				myPoint3D* p = test->source->point;
+
+				myVector3D ap(p->X - a->X, p->Y - a->Y, p->Z - a->Z);
+				myVector3D bp(p->X - b->X, p->Y - b->Y, p->Z - b->Z);
+				myVector3D cp(p->X - c->X, p->Y - c->Y, p->Z - c->Z);
+
+				myVector3D cross1; cross1.crossproduct(ab, ap);
+				myVector3D edge_bc(c->X - b->X, c->Y - b->Y, c->Z - b->Z);
+				myVector3D cross2; cross2.crossproduct(edge_bc, bp);
+				myVector3D ca(a->X - c->X, a->Y - c->Y, a->Z - c->Z);
+				myVector3D cross3; cross3.crossproduct(ca, cp);
+
+				double d1 = cross1.dX * face_normal.dX + cross1.dY * face_normal.dY + cross1.dZ * face_normal.dZ;
+				double d2 = cross2.dX * face_normal.dX + cross2.dY * face_normal.dY + cross2.dZ * face_normal.dZ;
+				double d3 = cross3.dX * face_normal.dX + cross3.dY * face_normal.dY + cross3.dZ * face_normal.dZ;
+
+				if (d1 >= 0 && d2 >= 0 && d3 >= 0) {
+					ear = false;
+					break;
+				}
+				test = test->next;
+			}
+			if (ear) {
+				f->adjacent_halfedge = he;
+				return true;
+			}
+		}
+		he = he->next;
+	} while (he != start);
+
+	f->adjacent_halfedge = start;
+	return true;
+}
