@@ -162,16 +162,23 @@ void menu(int item)
 	case MENU_GENERATE:
 		{
 			vector<myPoint3D> profile;
-			profile.push_back(myPoint3D(0.4, 0, -1.0));
-			profile.push_back(myPoint3D(0.5, 0, -0.8));
-			profile.push_back(myPoint3D(0.55, 0, -0.5));
-			profile.push_back(myPoint3D(0.4, 0, -0.2));
-			profile.push_back(myPoint3D(0.3, 0,  0.0));
-			profile.push_back(myPoint3D(0.25, 0, 0.2));
-			profile.push_back(myPoint3D(0.3, 0,  0.5));
-			profile.push_back(myPoint3D(0.35, 0, 0.8));
-			profile.push_back(myPoint3D(0.3, 0,  1.0));
-			m->generateSurfaceOfRevolution(profile, 24);
+			int slices = 24;
+			ifstream pfile("profile.txt");
+			if (!pfile.is_open()) {
+				cout << "Cannot open profile.txt\n";
+				break;
+			}
+			pfile >> slices;
+			double r, h;
+			while (pfile >> r >> h) {
+				profile.push_back(myPoint3D(r, 0, h));
+			}
+			pfile.close();
+			if (profile.size() < 2) {
+				cout << "Profile needs at least 2 points\n";
+				break;
+			}
+			m->generateSurfaceOfRevolution(profile, slices);
 			m->computeNormals();
 			makeBuffers(m);
 			break;
@@ -389,7 +396,7 @@ void initMesh()
 	
 	cout << "Reading mesh from file...\n";
 	m = new myMesh();
-	if (m->readFile("c_gear.obj")) {
+	if (m->readFile("gear.obj")) {
 		m->computeNormals();
 		makeBuffers(m);
 	}
