@@ -156,7 +156,14 @@ void menu(int item)
 		}
 	case MENU_SIMPLIFY:
 	 	{
+			/*
+			for (int i = 0; i < 50 && m->faces.size() > 4; i++) {
+    			m->simplify();
+			}
+			*/
 			m->simplify();
+			m->computeNormals();
+			makeBuffers(m);
 			break;
 	 	}
 	case MENU_GENERATE:
@@ -396,7 +403,7 @@ void initMesh()
 	
 	cout << "Reading mesh from file...\n";
 	m = new myMesh();
-	if (m->readFile("gear.obj")) {
+	if (m->readFile("cube.obj")) {
 		m->computeNormals();
 		makeBuffers(m);
 	}

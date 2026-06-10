@@ -4,6 +4,8 @@
 #include <sstream>
 #include <map>
 #include <utility>
+#include <algorithm>
+#include <limits>
 #include <GL/glew.h>
 #include "myVector3D.h"
 
@@ -297,12 +299,112 @@ void myMesh::subdivisionCatmullClark()
 
 void myMesh::simplify()
 {
-	/**** TODO ****/
+	if (halfedges.size() == 0) return;
+
+	myHalfedge* shortest = NULL;
+	double min_len = std::numeric_limits<double>::max();
+
+	for (unsigned int i = 0; i < halfedges.size(); i++) {
+		myHalfedge* he = halfedges[i];
+		if (he->twin == NULL) continue;
+		double len = he->source->point->dist(*he->twin->source->point);
+		if (len < min_len) {
+			min_len = len;
+			shortest = he;
+		}
+	}
+
+	if (shortest == NULL) return;
+
+	simplify(shortest->source);
 }
 
-void myMesh::simplify(myVertex *)
+void myMesh::simplify(myVertex *v)
 {
-	/**** TODO ****/
+	if (v == NULL || v->originof == NULL) return;
+
+	myHalfedge* shortest = NULL;
+	double min_len = std::numeric_limits<double>::max();
+
+	myHalfedge* step = v->originof;
+	do {
+		if (step->twin != NULL) {
+			double len = step->source->point->dist(*step->twin->source->point);
+			if (len < min_len) {
+				min_len = len;
+				shortest = step;
+			}
+		}
+		if (step->twin == NULL) break;
+		step = step->twin->next;
+	} while (step != v->originof);
+
+	if (shortest == NULL) return;
+
+	myVertex* v_keep = shortest->source;
+	myVertex* v_remove = shortest->twin->source;
+
+	v_keep->point->X = (v_keep->point->X + v_remove->point->X) / 2.0;
+	v_keep->point->Y = (v_keep->point->Y + v_remove->point->Y) / 2.0;
+	v_keep->point->Z = (v_keep->point->Z + v_remove->point->Z) / 2.0;
+
+	step = v_remove->originof;
+	if (step != NULL) {
+		do {
+			step->source = v_keep;
+			if (step->twin == NULL) break;
+			step = step->twin->next;
+		} while (step != v_remove->originof);
+	}
+
+	myFace* f1 = shortest->adjacent_face;
+	myFace* f2 = shortest->twin->adjacent_face;
+
+	myHalfedge* a1 = shortest->next;
+	myHalfedge* b1 = shortest->prev;
+	if (a1->twin != NULL) a1->twin->twin = b1->twin;
+	if (b1->twin != NULL) b1->twin->twin = a1->twin;
+
+	myHalfedge* a2 = shortest->twin->next;
+	myHalfedge* b2 = shortest->twin->prev;
+	if (a2->twin != NULL) a2->twin->twin = b2->twin;
+	if (b2->twin != NULL) b2->twin->twin = a2->twin;
+
+	if (b1->twin != NULL) v_keep->originof = b1->twin;
+	else if (a2->twin != NULL) v_keep->originof = a2->twin;
+	else v_keep->originof = NULL;
+
+	if (a1->source->originof == a1) {
+		if (a1->twin != NULL) a1->source->originof = a1->twin->next;
+		else a1->source->originof = NULL;
+	}
+	if (b1->source->originof == b1) {
+		if (b1->twin != NULL) b1->source->originof = b1->twin->next;
+		else b1->source->originof = NULL;
+	}
+	if (a2->source->originof == a2) {
+		if (a2->twin != NULL) a2->source->originof = a2->twin->next;
+		else a2->source->originof = NULL;
+	}
+	if (b2->source->originof == b2) {
+		if (b2->twin != NULL) b2->source->originof = b2->twin->next;
+		else b2->source->originof = NULL;
+	}
+
+	myHalfedge* he_del[] = { shortest, shortest->twin, a1, b1, a2, b2 };
+	myFace* f_del[] = { f1, f2 };
+
+	for (int i = 0; i < 6; i++) {
+		halfedges.erase(std::remove(halfedges.begin(), halfedges.end(), he_del[i]), halfedges.end());
+	}
+	for (int i = 0; i < 2; i++) {
+		faces.erase(std::remove(faces.begin(), faces.end(), f_del[i]), faces.end());
+	}
+	vertices.erase(std::remove(vertices.begin(), vertices.end(), v_remove), vertices.end());
+
+	for (int i = 0; i < 6; i++) delete he_del[i];
+	for (int i = 0; i < 2; i++) delete f_del[i];
+	delete v_remove;
 }
 
 void myMesh::triangulate()
